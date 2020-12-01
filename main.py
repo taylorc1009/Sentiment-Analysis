@@ -1,6 +1,8 @@
 from keras.datasets import imdb
 from nltk import word_tokenize
 from nltk.util import ngrams
+import nltk
+nltk.download('punkt')
 (training_data, training_targets), (testing_data, testing_targets) = imdb.load_data()
 
 # index = imdb.get_word_index()
@@ -16,6 +18,7 @@ def extract_ngrams(sentences):
         tokens = word_tokenize(sentence)
         unigrams.append(extract_unigrams(tokens))
         bigrams.append(extract_bigrams(tokens))
+    return unigrams, bigrams
 
 
 def extract_unigrams(tokens):
