@@ -16,13 +16,17 @@ def get_popular_ngrams(sentences):
     unigrams, bigrams = extract_ngrams(sentences)
     popular_unigrams, popular_bigrams = Counter(unigrams).most_common(20), Counter(bigrams).most_common(20)
 
+    i = 0
     print("Top 20 unigrams")
     for unigram in popular_unigrams:
-        print(unigram)
+        i += 1
+        print(str(i) + ". " + unigram[0] + " : " + str(unigram[1]))
 
+    i = 0
     print("\nTop 20 bigrams")
     for bigram in popular_bigrams:
-        print(bigram)
+        i += 1
+        print(str(i) + ". " + "{ " + bigram[0][0] + ", " + bigrams[0][1] + " } : " + str(bigram[1]))
 
 
 def extract_ngrams(sentences):
