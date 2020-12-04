@@ -13,7 +13,8 @@ nltk.download('stopwords')
 # for training/testing TODO (why?)
 (training_data, training_targets), (testing_data, testing_targets) = imdb.load_data()
 
-# inverts the { word: ID } dictionary order
+# inverts the { word: ID } dictionary order ('get_word_index()' returns a list of words with IDs
+# see 'get_popular_ngrams()'
 index = dict([(value, key) for (key, value) in imdb.get_word_index().items()])
 
 
@@ -25,8 +26,12 @@ def get_popular_ngrams(sentences):
     # TODO difference between "could" and "couldn't") but it would be better if the tokenizer would not split these
     for o in ['br', '#', '\'', '\'ve', 'n\'t', '\'s']:
         occlude.append(o)
+
+    # decodes the message of word IDs to construct an actual message of text
+    # TODO would it be better to get n-grams using the word IDs, then get the word(s) from the index after?
     for sentence in sentences:
         decoded.append(" ".join([index.get(wordID - 3, "#") for wordID in sentence]))
+
     unigrams, bigrams = extract_ngrams(decoded, occlude)
 
     i = 0
