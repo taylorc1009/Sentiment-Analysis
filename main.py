@@ -19,20 +19,10 @@ index = dict([(value, key) for (key, value) in imdb.get_word_index().items()])
 
 
 def get_popular_ngrams(sentences):
-    decoded = []
     occlude = stopwords.words('english')
-
-    # TODO are these needed for better sentiment analysis? it would appear that they are (for example, there's a
-    # TODO difference between "could" and "couldn't") but it would be better if the tokenizer would not split these
-    for o in ['br', '#', '\'', '\'ve', 'n\'t', '\'s']:
+    for o in ['br', '#']:
         occlude.append(o)
-
-    # decodes the message of word IDs to construct an actual message of text
-    # TODO would it be better to get n-grams using the word IDs, then get the word(s) from the index after?
-    for sentence in sentences:
-        decoded.append(" ".join([index.get(wordID - 3, "#") for wordID in sentence]))
-
-    unigrams, bigrams = extract_ngrams(decoded, occlude)
+    unigrams, bigrams, decoded = extract_ngrams(sentences, occlude)
 
     i = 0
     print("Top 20 unigrams")
@@ -54,18 +44,25 @@ def get_popular_ngrams(sentences):
 def extract_ngrams(sentences, occlude):
     unigrams = {}
     bigrams = {}
-    for sentence in sentences:
-        # we use TweetTokenizer as it doesn't split words by apostrophe - TODO is this better?
-        words = nltk.TweetTokenizer().tokenize(sentence)
+    decoded = []
 
-        for word in words:
+    # this doesn't tokenize because it gets the unigrams as well as decoding the sentence at the same time, instead of
+    # decoding by iterating every ID in each sentence then iterating every decoded word; essentially, they're now merged
+    for sentence in sentences:
+        decoded_sentence = ""
+        decoded_list = []
+
+        for wordID in sentence:
+            word = index.get(wordID - 3, "#")
+            decoded_sentence += " " + word
+            decoded_list.append(word)
             if word not in occlude:
                 if word not in unigrams:
                     unigrams[word] = 1
                 else:
                     unigrams[word] += 1
 
-        grams = ngrams(words, 2)
+        grams = ngrams(decoded_list, 2)
         for gram in grams:
             if gram[0] not in occlude and gram[1] not in occlude:
                 if gram not in bigrams:
@@ -73,10 +70,10 @@ def extract_ngrams(sentences, occlude):
                 else:
                     bigrams[gram] += 1
 
-    return unigrams, bigrams
+        decoded.append(decoded_sentence)
 
+    return unigrams, bigrams, decoded
 
-# print(decoded)
 
 get_popular_ngrams(training_data)
 
