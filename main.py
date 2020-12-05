@@ -19,9 +19,11 @@ index = dict([(value, key) for (key, value) in imdb.get_word_index().items()])
 
 
 def get_popular_ngrams(sentences):
+    # this prevents the inclusion of pronouns; words without much meaning to the sentiment
     occlude = stopwords.words('english')
     for o in ['br', '#']:
         occlude.append(o)
+
     unigrams, bigrams, decoded = extract_ngrams(sentences, occlude)
 
     i = 0
@@ -46,23 +48,22 @@ def extract_ngrams(sentences, occlude):
     bigrams = {}
     decoded = []
 
-    # this doesn't tokenize because it gets the unigrams as well as decoding the sentence at the same time, instead of
-    # decoding by iterating every ID in each sentence then iterating every decoded word; essentially, they're now merged
+    # this doesn't tokenize to get the unigrams because it gets the unigrams as well as decoding the sentence at the
+    # same time, instead of decoding by iterating every ID in each sentence then iterating every decoded word;
+    # essentially, they're now merged
     for sentence in sentences:
         decoded_sentence = ""
-        decoded_list = []
 
         for wordID in sentence:
             word = index.get(wordID - 3, "#")
             decoded_sentence += " " + word
-            decoded_list.append(word)
             if word not in occlude:
                 if word not in unigrams:
                     unigrams[word] = 1
                 else:
                     unigrams[word] += 1
 
-        grams = ngrams(decoded_list, 2)
+        grams = ngrams(decoded_sentence.split(' '), 2)
         for gram in grams:
             if gram[0] not in occlude and gram[1] not in occlude:
                 if gram not in bigrams:
