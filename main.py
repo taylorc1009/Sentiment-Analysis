@@ -25,9 +25,8 @@ index = dict([(value, key) for (key, value) in imdb.get_word_index().items()])
 
 vectorizer = CountVectorizer()
 
-# this prevents the inclusion of pronouns; words without much meaning to the sentiment, add any other strings you may
-# want to prevent
-occlusions = ['br', '#']
+# this prevents the inclusion of specified strings, add any other strings you may want to prevent
+occlusions = ['br', '#']  # for now, we only exclude system chars
 
 
 def decode_sentence(sentence, occlude):  # converts a sentence from a list of integers (word IDs) to words
@@ -39,7 +38,7 @@ def decode_sentence(sentence, occlude):  # converts a sentence from a list of in
     return decoded_sentence
 
 
-def occlude_stopwords(tweet_tokenizer):
+def occlude_stopwords():  # adds stopwords (pronouns; words without much meaning to the sentiment) to the occlusions
     for o in stopwords.words('english'):
         occlusions.append(o)
 
@@ -50,7 +49,7 @@ def extract_data(data, occlude=False, tweet_tokenize=False):
     decoded = []
 
     if occlude:
-        occlude_stopwords(tweet_tokenize)
+        occlude_stopwords()
 
     for sentence in data:
         decoded_sentence = decode_sentence(sentence, occlude)
