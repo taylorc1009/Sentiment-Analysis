@@ -1,10 +1,12 @@
 from keras.datasets import imdb
-from keras_preprocessing.text import Tokenizer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.tree import DecisionTreeClassifier
 from nltk import word_tokenize
 from nltk.util import ngrams
 from nltk.corpus import stopwords
-from sklearn.feature_extraction.text import CountVectorizer
 import nltk
+from tensorflow.python.keras import Sequential
+from tensorflow.python.keras.applications.densenet import layers
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -17,17 +19,12 @@ nltk.download('stopwords')
 # see 'get_popular_ngrams()'
 index = dict([(value, key) for (key, value) in imdb.get_word_index().items()])
 
+vectorizer = CountVectorizer()
 
-def get_popular_ngrams(sentences):
-    # this prevents the inclusion of pronouns; words without much meaning to the sentiment
-    occlude = stopwords.words('english')
-    for o in ['br', '#']:
-        occlude.append(o)
 
-    unigrams, bigrams, decoded = extract_ngrams(sentences, occlude)
-
+def print_popular_ngrams(unigrams, bigrams):
     i = 0
-    print("Top 20 unigrams")
+    print("\nTop 20 unigrams")
     for unigram in dict(sorted(unigrams.items(), key=lambda item: item[1], reverse=True)):
         i += 1
         if i > 20:
@@ -43,27 +40,30 @@ def get_popular_ngrams(sentences):
         print(str(i) + ".", bigram, "::", bigrams[bigram])
 
 
-def extract_ngrams(sentences, occlude):
+def extract_data(data):
     unigrams = {}
     bigrams = {}
     decoded = []
 
-    # this doesn't tokenize to get the unigrams because it gets the unigrams as well as decoding the sentence at the
-    # same time, instead of decoding by iterating every ID in each sentence then iterating every decoded word;
-    # essentially, they're now merged
-    for sentence in sentences:
-        decoded_sentence = ""
+    # this prevents the inclusion of pronouns; words without much meaning to the sentiment
+    occlude = []  # stopwords.words('english')
+    for o in ['br', '#']:
+        occlude.append(o)
 
-        for wordID in sentence:
-            word = index.get(wordID - 3, "#")
-            decoded_sentence += " " + word
+    for sentence in data:
+        decoded_sentence = decode_sentence(sentence)
+        decoded_tokenized = word_tokenize(decoded_sentence)
+
+        for word in decoded_tokenized:  # unigrams
             if word not in occlude:
                 if word not in unigrams:
                     unigrams[word] = 1
                 else:
                     unigrams[word] += 1
 
-        grams = ngrams(decoded_sentence.split(' '), 2)
+        vectorizer.fit_transform(decoded_tokenized)
+
+        grams = ngrams(decoded_tokenized, 2)  # bigrams
         for gram in grams:
             if gram[0] not in occlude and gram[1] not in occlude:
                 if gram not in bigrams:
@@ -73,16 +73,23 @@ def extract_ngrams(sentences, occlude):
 
         decoded.append(decoded_sentence)
 
-    return unigrams, bigrams, decoded
+    print_popular_ngrams(unigrams, bigrams)
+
+    return vectorizer.transform(sentence for sentence in decoded).toarray()
 
 
-get_popular_ngrams(training_data)
+def decode_sentence(sentence):  # converts a sentence from a list of integers (word IDs) to words
+    decoded_sentence = ""
+    for wordID in sentence:
+        word = index.get(wordID - 3, "#")
+        decoded_sentence += " " + word
+    return decoded_sentence
 
-# vectorizer = CountVectorizer()
-# imdb_bag_of_words = vectorizer.fit_transform(imdb.get_word_index())
-# vectorizer.get_feature_names()
-# bow_vector = imdb_bag_of_words.toarray()
-# vectorizer.vocabulary_.get('awesome')
-# vectorizer.transform(['Something completely new.']).toarray()
 
-# tokenizer = Tokenizer(imdb_bag_of_words.size())
+vectorized_data = extract_data(training_data)
+
+tree = DecisionTreeClassifier(criterion='entropy').fit(vectorized_data, training_targets)
+
+print("\nThe prediction accuracy is: ", tree.score(vectorizer.transform(decode_sentence(sentence) for sentence in
+                                                                        testing_data).toarray(),
+                                                   testing_targets) * 100, "%")
