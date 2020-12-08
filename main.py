@@ -24,7 +24,7 @@ nltk.download('stopwords')
 occlude_stopwords = False  # whether or not to prevent words without much sentiment from being used
 use_tweet_tokenizer = False  # use the TweetTokenizer to split the decoded sentences
 input_dimension = 5000  # amount of values to test with, default is all = max(len(testing_data), len(testing_targets))
-analyse_using_bigrams = False  # should the bigrams be included in the bag of words vocabulary?
+use_bigrams = True  # should the bigrams be used as the bag of words vocabulary?
 
 # inverts the { word: ID } dictionary order ('get_word_index()' returns a list of words with IDs
 # see 'get_popular_ngrams()'
@@ -75,8 +75,8 @@ def extract_data(data, is_testing=False):
             decoded_tokenized.extend(concatenated_bigrams)
             vectorizer.fit_transform(decoded_tokenized)
 
-        if analyse_using_bigrams:
-            sentence_vocabularies.append(decoded_sentence[3:] + ' ' + concatenated_bigrams_str)
+        if use_bigrams:
+            sentence_vocabularies.append(concatenated_bigrams_str)
         else:
             sentence_vocabularies.append(decoded_sentence[3:])
 
@@ -85,6 +85,7 @@ def extract_data(data, is_testing=False):
 
 def extract_unigrams(unigrams_, tokenized_sentence):
     for word in tokenized_sentence:
+        # prevents stand-alone apostrophes from being used as tokens
         if not (word in system_occlusions or (use_tweet_tokenizer and word[0] == '\'')):
             if word not in unigrams_:
                 unigrams_[word] = 1
@@ -99,6 +100,8 @@ def extract_ngrams(ngrams_, tokenized_sentence, n=2):
 
     grams = ngrams(tokenized_sentence, n)
     for gram in grams:
+        # this if prevents system characters from being used, such as 'br', and the tweet tokenizer also gives
+        # apostrophes as their own token so this prevents that also
         if not ((gram[0] in system_occlusions or gram[1] in system_occlusions) or (use_tweet_tokenizer and (gram[0] ==
                                                                                                             "'" or gram[
                                                                                                                 1] ==
@@ -106,7 +109,7 @@ def extract_ngrams(ngrams_, tokenized_sentence, n=2):
             if gram not in ngrams_:
                 ngrams_[gram] = 1
 
-                if analyse_using_bigrams:
+                if use_bigrams:
                     concatenated_gram = ' '.join(word for word in gram)
                     concatenated_grams_str += ' ' + concatenated_gram
                     concatenated_grams.append(concatenated_gram)
@@ -139,7 +142,7 @@ def analyse_data(training_bag_of_words):
     data_in_range = extract_data(testing_data[:input_dimension], is_testing=True)[2]
     targets_in_range = testing_targets[:input_dimension]
 
-    if analyse_using_bigrams:
+    if use_bigrams:  # we need to use pad_sequence to prevent any possible mismatch of vocabulary lengths
         print("\nThe prediction accuracy is: ", tree.score(pad_sequences(data_in_range, padding='post',
                                                                          maxlen=max(len(training_bag_of_words[0]), len(
                                                                              data_in_range[0]))), targets_in_range) *
@@ -150,8 +153,8 @@ def analyse_data(training_bag_of_words):
     dot_data = StringIO()
     export_graphviz(tree, out_file=dot_data, filled=True, rounded=True, special_characters=True)
     graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
-    svg_str = graph.write_svg()
-    img = Image(filename='tree.svg', data=svg_str)
+    svg_str = graph.create_svg()
+    img = Image(filename='tree.png', data=svg_str)
     display(img.data)
 
 
