@@ -21,10 +21,11 @@ nltk.download('stopwords')
 (training_data, training_targets), (testing_data, testing_targets) = imdb.load_data()
 
 # Application settings
-occlude_stopwords = False  # whether or not to prevent words without much sentiment from being used
-use_tweet_tokenizer = False  # use the TweetTokenizer to split the decoded sentences
-input_dimension = 5000  # amount of values to test with, default is all = max(len(testing_data), len(testing_targets))
-use_bigrams = True  # should the bigrams be used as the bag of words vocabulary?
+occlude_stopwords = True  # whether or not to prevent words without much sentiment from being used
+use_tweet_tokenizer = True  # use TweetTokenizer to split the decoded sentences; gives cleaner data (see 'extract_data)
+training_dim = 5000  # amount of values provide for training
+testing_dim = 1000  # amount of values to test with; if you want all, use = max(len(testing_data), len(testing_targets))
+use_bigrams = False  # should the bigrams be used as the bag of words vocabulary?
 
 # inverts the { word: ID } dictionary order ('get_word_index()' returns a list of words with IDs
 # see 'get_popular_ngrams()'
@@ -49,7 +50,7 @@ def decode_sentence(sentence):  # converts a sentence from a list of integers (w
     return decoded_sentence
 
 
-def extract_data(data, is_testing=False):
+def extract_data(data, is_test=False):
     unigrams_ = {}
     bigrams_ = {}
     sentence_vocabularies = []
@@ -62,23 +63,20 @@ def extract_data(data, is_testing=False):
         decoded_tokenized = TweetTokenizer.tokenize(TweetTokenizer(), decoded_sentence) if use_tweet_tokenizer else \
             word_tokenize(decoded_sentence)
 
-        if not is_testing:  # we won't need unigrams for testing purposes
+        if not is_test:  # we won't need unigrams for testing purposes
             unigrams_ = extract_unigrams(unigrams_, decoded_tokenized)
 
         # concatenated_bigrams - used to add the bigrams to the vocabulary
         # concatenated_bigrams_str - used to get the bigrams in the bag of words
         bigrams_, concatenated_bigrams_str, concatenated_bigrams = extract_ngrams(bigrams_, decoded_tokenized)
 
-        # detects testing as we don't want to resize the vocabulary after training, as this could result in mismatched
-        # list lengths
-        if not is_testing:
-            decoded_tokenized.extend(concatenated_bigrams)
-            vectorizer.fit_transform(decoded_tokenized)
-
         if use_bigrams:
             sentence_vocabularies.append(concatenated_bigrams_str)
         else:
             sentence_vocabularies.append(decoded_sentence[3:])
+
+    if not is_test:
+        vectorizer.fit(unigrams_.keys())
 
     return unigrams_, bigrams_, vectorizer.transform(vocabulary for vocabulary in sentence_vocabularies).toarray()
 
@@ -137,10 +135,11 @@ def print_popular_ngrams(unigrams_, bigrams_):
 
 
 def analyse_data(training_bag_of_words):
-    tree = DecisionTreeClassifier(criterion='entropy').fit(training_bag_of_words, training_targets)
+    tree = DecisionTreeClassifier(criterion='entropy', max_depth=5).fit(training_bag_of_words,
+                                                                        training_targets[:training_dim])
 
-    data_in_range = extract_data(testing_data[:input_dimension], is_testing=True)[2]
-    targets_in_range = testing_targets[:input_dimension]
+    data_in_range = extract_data(testing_data[:testing_dim], is_test=True)[2]
+    targets_in_range = testing_targets[:testing_dim]
 
     if use_bigrams:  # we need to use pad_sequence to prevent any possible mismatch of vocabulary lengths
         print("\nThe prediction accuracy is: ", tree.score(pad_sequences(data_in_range, padding='post',
@@ -158,6 +157,6 @@ def analyse_data(training_bag_of_words):
     display(img.data)
 
 
-unigrams, bigrams, bags_of_words = extract_data(training_data)
+unigrams, bigrams, bags_of_words = extract_data(training_data[:training_dim])
 print_popular_ngrams(unigrams, bigrams)
 analyse_data(bags_of_words)
