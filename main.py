@@ -1,12 +1,11 @@
+from sklearn import metrics
 from keras.datasets import imdb
-from keras_preprocessing.sequence import pad_sequences
 from six import StringIO
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.tree import DecisionTreeClassifier
 from nltk.tokenize import TweetTokenizer, word_tokenize
 from nltk.util import ngrams
 from nltk.corpus import stopwords
-from IPython.display import Image, display
 from sklearn.tree import export_graphviz
 import pydotplus
 import nltk
@@ -22,7 +21,7 @@ nltk.download('stopwords')
 
 # Application settings
 occlude_stopwords = True  # whether or not to prevent words without much sentiment from being used
-use_tweet_tokenizer = True  # use TweetTokenizer to split the decoded sentences; gives cleaner data (see 'extract_data)
+use_tweet_tokenizer = True  # use TweetTokenizer to split the decoded sentence; gives cleaner data (see 'extract_data')
 training_dim = 5000  # amount of values provide for training
 testing_dim = 1000  # amount of values to test with; if you want all, use = max(len(testing_data), len(testing_targets))
 use_bigrams = False  # should the bigrams be used as the bag of words vocabulary?
@@ -54,6 +53,7 @@ def extract_data(data, is_test=False):
     unigrams_ = {}
     bigrams_ = {}
     sentence_vocabularies = []
+    concatenated_bigrams_str = ""
 
     for sentence in data:
         decoded_sentence = decode_sentence(sentence)
@@ -66,9 +66,10 @@ def extract_data(data, is_test=False):
         if not is_test:  # we won't need unigrams for testing purposes
             unigrams_ = extract_unigrams(unigrams_, decoded_tokenized)
 
-        # concatenated_bigrams - used to add the bigrams to the vocabulary
-        # concatenated_bigrams_str - used to get the bigrams in the bag of words
-        bigrams_, concatenated_bigrams_str, concatenated_bigrams = extract_ngrams(bigrams_, decoded_tokenized)
+        if not is_test or (is_test and use_bigrams):
+            # concatenated_bigrams - used to add the bigrams to the vocabulary
+            # concatenated_bigrams_str - used to get the bigrams in the bag of words
+            bigrams_, concatenated_bigrams_str, concatenated_bigrams = extract_ngrams(bigrams_, decoded_tokenized)
 
         if use_bigrams:
             sentence_vocabularies.append(concatenated_bigrams_str)
@@ -140,8 +141,10 @@ def analyse_data(training_bag_of_words):
 
     data_in_range = extract_data(testing_data[:testing_dim], is_test=True)[2]
     targets_in_range = testing_targets[:testing_dim]
-    print("\nThe prediction accuracy is: ", tree.score(data_in_range, targets_in_range) * 100, "%")
+    print("\nPrediction Accuracy: ", tree.score(data_in_range, targets_in_range) * 100, "%")
+    print("\nRecall: ", metrics.recall_score(targets_in_range, tree.predict(data_in_range)) * 100, "%")
 
+    # outputs a GraphViz tree object as an SVG
     dot_data = StringIO()
     export_graphviz(tree, out_file=dot_data, filled=True, rounded=True, special_characters=True)
     graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
