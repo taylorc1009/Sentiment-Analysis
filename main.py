@@ -22,7 +22,7 @@ nltk.download('stopwords')
 # Application settings
 occlude_stopwords = True  # whether or not to prevent words without much sentiment from being used
 use_tweet_tokenizer = True  # use TweetTokenizer to split the decoded sentence; gives cleaner data (see 'extract_data')
-training_dim = 5000  # amount of values provide for training
+training_dim = 5000  # n values to provide for training (max amount results in an extremely large amount of operations)
 testing_dim = 1000  # amount of values to test with; if you want all, use = max(len(testing_data), len(testing_targets))
 use_bigrams = False  # should the bigrams be used as the bag of words vocabulary?
 
