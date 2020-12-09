@@ -140,21 +140,12 @@ def analyse_data(training_bag_of_words):
 
     data_in_range = extract_data(testing_data[:testing_dim], is_test=True)[2]
     targets_in_range = testing_targets[:testing_dim]
-
-    if use_bigrams:  # we need to use pad_sequence to prevent any possible mismatch of vocabulary lengths
-        print("\nThe prediction accuracy is: ", tree.score(pad_sequences(data_in_range, padding='post',
-                                                                         maxlen=max(len(training_bag_of_words[0]), len(
-                                                                             data_in_range[0]))), targets_in_range) *
-              100, "%")
-    else:
-        print("\nThe prediction accuracy is: ", tree.score(data_in_range, targets_in_range) * 100, "%")
+    print("\nThe prediction accuracy is: ", tree.score(data_in_range, targets_in_range) * 100, "%")
 
     dot_data = StringIO()
     export_graphviz(tree, out_file=dot_data, filled=True, rounded=True, special_characters=True)
     graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
-    svg_str = graph.create_svg()
-    img = Image(filename='tree.png', data=svg_str)
-    display(img.data)
+    graph.write(path='tree.svg', format='svg')
 
 
 unigrams, bigrams, bags_of_words = extract_data(training_data[:training_dim])
