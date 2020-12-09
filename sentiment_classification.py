@@ -147,8 +147,12 @@ def analyse_data(training_bag_of_words):
     # gets only the testing data bag of words from the extract
     data_in_range = extract_data(testing_data[:testing_dim], is_test=True)[2]
     targets_in_range = testing_targets[:testing_dim]
-    print("\nPrediction Accuracy: ", tree.score(data_in_range, targets_in_range) * 100, "%")
-    print("\nRecall: ", metrics.recall_score(targets_in_range, tree.predict(data_in_range)) * 100, "%")
+
+    print('\n=== Metrics ===')
+    print('\nPrediction Accuracy: ', tree.score(data_in_range, targets_in_range) * 100, "%")
+    print('\nRecall: ', metrics.recall_score(targets_in_range, tree.predict(data_in_range)) * 100, "%")
+    print('\nConfusion matrix:\n', metrics.confusion_matrix(targets_in_range, tree.predict(data_in_range)),
+          '\nMatrix Column and Row labels (both are in the same order):\n 1 = False\n 2 = True')
 
     if export_tree_model:  # outputs a GraphViz tree object as an SVG
         dot_data = StringIO()
