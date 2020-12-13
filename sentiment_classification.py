@@ -50,6 +50,7 @@ def decode_sentence(sentence):  # converts a sentence from a list of integers (w
     return decoded_sentence
 
 
+# if we're not training or testing (both booleans are 'False'), we can still use this to get the data without
 def extract_data(data, is_train=False, is_test=False):
     unigrams_ = {}
     bigrams_ = {}
@@ -89,7 +90,7 @@ def extract_data(data, is_train=False, is_test=False):
         # vocabulary in the sentence (0 if a word isn't in the sentence)
         bags_of_words_ = vectorizer.transform(vocabulary for vocabulary in sentence_vocabularies).toarray()
     except Exception as e:
-        logger.error(repr(e.args))
+        logger.error(repr(e))
 
     return unigrams_, bigrams_, bags_of_words_
 
