@@ -9,9 +9,7 @@ from nltk.corpus import stopwords
 from sklearn.tree import export_graphviz
 import pydotplus
 import nltk
-import os
 
-os.environ["PATH"] += os.pathsep + 'C:/Program Files/Graphviz 2.44.1/bin/'
 nltk.download('punkt')
 
 # splits the data into training and testing data, the target data signifies whether or not each sentence will be used
@@ -114,10 +112,7 @@ def extract_ngrams(ngrams_, tokenized_sentence, n=2):
     for gram in grams:
         # this if prevents system characters from being used, such as 'br', and the tweet tokenizer also gives
         # apostrophes as their own token so this prevents that also
-        if not ((gram[0] in system_occlusions or gram[1] in system_occlusions) or (use_tweet_tokenizer and (gram[0] ==
-                                                                                                            "'" or gram[
-                                                                                                                1] ==
-                                                                                                            "'"))):
+        if not ((gram[0] in system_occlusions or gram[1] in system_occlusions) or (use_tweet_tokenizer and (gram[0] == "'" or gram[1] == "'"))):
             if gram not in ngrams_:  # counts the occurrence of each unique bigram
                 ngrams_[gram] = 1
 
@@ -150,11 +145,10 @@ def print_popular_ngrams(unigrams_, bigrams_):  # sorts the unigrams and bigrams
 
 def analyse_data(training_bag_of_words, depth=5):
     # trains the tree using the training data as bags of words with their respective labels (sentiments)
-    tree = DecisionTreeClassifier(criterion='entropy', max_depth=depth).fit(training_bag_of_words,
-                                                                            training_targets[:training_dim])
+    tree = DecisionTreeClassifier(criterion='entropy', max_depth=depth).fit(training_bag_of_words, training_targets[:training_dim])
 
     # gets only the testing data bag of words from the extract
-    data_in_range = extract_data(testing_data[:testing_dim], is_test=True)[2]
+    _, _, data_in_range = extract_data(testing_data[:testing_dim], is_test=True)
     targets_in_range = testing_targets[:testing_dim]
 
     print('\n=== Metrics ===')
