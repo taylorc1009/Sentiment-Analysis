@@ -125,20 +125,20 @@ def extract_ngrams(ngrams_, tokenized_sentence, n=2):
     return ngrams_, concatenated_grams_str, concatenated_grams
 
 
-def print_popular_ngrams(unigrams_, bigrams_):  # sorts the unigrams and bigrams, then displays the 20 most occurring
+def print_popular_ngrams(unigrams_, bigrams_, _range=20): # sorts the unigrams and bigrams, then displays the 20 most occurring
     i = 0
-    print("\nTop 20 unigrams")
+    print("\nTop %d unigrams" % _range)
     for unigram in dict(sorted(unigrams_.items(), key=lambda item: item[1], reverse=True)):
         i += 1
-        if i > 20:
+        if i > _range:
             break
         print(str(i) + ".", unigram, "::", unigrams_[unigram])
 
     i = 0
-    print("\nTop 20 bigrams")
+    print("\nTop %d bigrams" % _range)
     for bigram in dict(sorted(bigrams_.items(), key=lambda item: item[1], reverse=True)):
         i += 1
-        if i > 20:
+        if i > _range:
             break
         print(str(i) + ".", bigram, "::", bigrams_[bigram])
 
